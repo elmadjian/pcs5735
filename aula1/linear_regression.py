@@ -1,4 +1,4 @@
-import sys, re
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -25,10 +25,11 @@ def main():
         #print("x_list:", x_list, "\n\ny_list:", y_list, "\n\ntheta_list:", theta_list)
 
 
-    #batch_gradient_descent(theta_list, x_list, y_list, 0.0005, 0.0000001)
-    #stochastic_gradient_descent(theta_list, x_list, y_list, 0.0005, 0.00001)
-    theta_list = normal_equations(x_list, y_list)
+    #batch_gradient_descent(theta_list, x_list, y_list, 0.000005, 0.00001)
+    stochastic_gradient_descent(theta_list, x_list, y_list, 0.000005, 0.00001)
+    #theta_list = normal_equations(x_list, y_list)
     print(theta_list)
+    print(J(theta_list, x_list, y_list))
     plot(theta_list, x_list, y_list)
 
 
@@ -51,7 +52,6 @@ def batch_gradient_descent(theta_list, x_list, y_list, alpha, epsilon):
     J_curr = J(theta_list, x_list, y_list)
     count = 0
     while (abs(J_curr - J_prev) > epsilon):
-        #print(count)
         count+=1
         if count > 10000:
             print("too much iterations")
@@ -65,6 +65,7 @@ def batch_gradient_descent(theta_list, x_list, y_list, alpha, epsilon):
             theta_list[j] = theta_list[j] - alpha * sigma
         J_prev = J_curr
         J_curr = J(theta_list, x_list, y_list)
+    print("iterations:", count)
 
 #--------------------------------
 def stochastic_gradient_descent(theta_list, x_list, y_list, alpha, epsilon):
@@ -72,7 +73,6 @@ def stochastic_gradient_descent(theta_list, x_list, y_list, alpha, epsilon):
     J_curr = J(theta_list, x_list, y_list)
     count = 0
     while (abs(J_curr - J_prev) > epsilon):
-        #print(count)
         count+=1
         if count > 10000:
             print("too much iterations")
@@ -83,6 +83,7 @@ def stochastic_gradient_descent(theta_list, x_list, y_list, alpha, epsilon):
                 theta_list[j] = theta_list[j] - alpha * diff * x_list[i][j]
         J_prev = J_curr
         J_curr = J(theta_list, x_list, y_list)
+    print("iterations:", count)
 
 #--------------------------------
 def normal_equations(x_list, y_list):
@@ -92,15 +93,15 @@ def normal_equations(x_list, y_list):
 
 #--------------------------------
 def plot(theta_list, x_list, y_list):
-    new_x_list = [i[0] for i in x_list]
+    new_x_list = [i[1] for i in x_list]
     plt.plot(new_x_list, y_list, 'ro')
     #x_list.sort()
     #for x in x_list:
     #    print("x:", x, "thetaTx:", np.dot(theta_list, x))
-    plt.plot(new_x_list, [np.dot((theta_list[0], theta_list[1]), (i[0], i[1])) for i in x_list])
-    plt.title("Regressão sobre os dados em 'height.csv'")
-    plt.xlabel("Idade")
-    plt.ylabel("Altura")
+    plt.plot(new_x_list, [np.dot((theta_list[1], theta_list[3]), (i[1], i[3])) for i in x_list])
+    plt.title("Regressão SGD sobre os dados em 'Iris Dataset'")
+    plt.xlabel("Largura da sépala")
+    plt.ylabel("Largura da pétala")
     plt.show()
 
 
