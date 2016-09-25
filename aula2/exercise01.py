@@ -100,6 +100,14 @@ def backpropagation(training_set, n_in, n_out, n_hidden, eta=0.05):
         [p.update_weights() for p in P_hidden]
         [p.update_weights() for p in P_in]
 
+    print("printing weights after 1 epoch:\n----------")
+    print("\nP_in:")
+    [print(p.weight) for p in P_in]
+    print("\nP_hidden:")
+    [print(p.weight) for p in P_hidden]
+    print("\nP_out:")
+    [print(p.weight) for p in P_out]
+
 #----------------------
 def main():
     np.random.seed(7)
