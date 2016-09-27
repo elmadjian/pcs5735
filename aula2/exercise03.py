@@ -1,18 +1,19 @@
 #important: python2!
 import cv2, os
-from ffnet import ffnet, mlgraph, readdata
+from ffnet import ffnet, mlgraph
 
 #------------------------
 def main():
     #creating network
-    conec = mlgraph((960, 16, 4))
+    conec = mlgraph((960, 128, 4))
     net   = ffnet(conec)
 
     #loadgin dataset
     dataset, target = load_dataset('/faces_4')
 
     #training the network
-    net.train_tnc(dataset, target, maxfun=1500, nproc='ncpu', messages=1)
+    net.train_tnc(dataset, target, nproc='ncpu', maxfun=1000, messages=1)
+    #net.train_bfgs(dataset, target, maxfun=1500)
 
     # #testing the network
     testset, test_target = load_dataset('/faces_test')
@@ -27,7 +28,6 @@ def load_dataset(folder_path):
     up:      --> 2
     straight --> 3
     """
-    print "path:", os.getcwd() + folder_path
     dataset, target = [], []
     for root, dirs, files in os.walk(os.getcwd() + folder_path):
         for name in files:
