@@ -1,6 +1,9 @@
+#Author: Carlos Eduardo Leão Elmadjian
+
 import numpy as np
 
-#----------------------
+#Class to model a single neuron
+#------------------------------
 class Perceptron():
     def __init__(self, idx, eta, inputs):
         self.idx = idx
@@ -48,7 +51,9 @@ class Perceptron():
         for i in range(len(self.weight)):
             self.weight[i] += self.eta * self.delta * self.input[i]
 
-#----------------------
+
+#Calculates the BPG algorithm for exercise 01
+#--------------------------------------------
 def backpropagation(training_set, n_in, n_out, n_hidden, eta=0.05, epochs=1):
     P_in = [Perceptron(i, eta, len(training_set[0][0])) for i in range(n_in)]
     P_hidden = [Perceptron(i, eta, n_in) for i in range(n_hidden)]
@@ -109,11 +114,13 @@ def backpropagation(training_set, n_in, n_out, n_hidden, eta=0.05, epochs=1):
     print("\nP_out:")
     [print(['%.4f' % w for w in p.weight]) for p in P_out]
 
-#----------------------
+#initial setup
+#--------------
 def main():
     np.random.seed(7)
     training_set = [[[0.6, 0.1, 0.2], [1, 0]], [[0.1, 0.5, 0.6], [0, 1]]]
     backpropagation(training_set, 3, 2, 3, epochs=100)
 
+#-----------------------
 if __name__ == "__main__":
     main()

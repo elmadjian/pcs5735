@@ -1,4 +1,6 @@
-import sys, re
+#Author: Carlos Eduardo Leão Elmadjian
+
+import sys
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
@@ -23,14 +25,11 @@ def main():
             x_list.append(curr_x)
             y_list.append(1.0) if values[-1].startswith("yes") else y_list.append(0.0)
 
-        #print("x_list:", x_list, "\n\ny_list:", y_list, "\n\ntheta_list:", theta_list)
-
-
     logistic_regression(theta_list, x_list, y_list, 0.0005, 0.0000001)
-    print(theta_list)
-    print(J(theta_list, x_list, y_list))
     plot(theta_list, x_list, y_list)
 
+#The logistic regression algorithm using SGD
+#-------------------------------------------
 def logistic_regression(theta_list, x_list, y_list, alpha, epsilon):
     J_prev = 0
     J_curr = J(theta_list, x_list, y_list)
@@ -48,25 +47,28 @@ def logistic_regression(theta_list, x_list, y_list, alpha, epsilon):
         J_curr = J(theta_list, x_list, y_list)
 
 
-#--------------------------------
+#Calculates the minimum cost function
+#------------------------------------
 def J(theta_list, x_list, y_list):
     sigma = 0
     for i in range(len(x_list)):
         sigma += (h_theta(theta_list, x_list[i]) - y_list[i])**2
     return sigma / 2
 
-
-#--------------------------------
+#Calculates h_theta
+#-------------------
 def h_theta(theta, x):
     return 1.0/(1.0 + np.exp(-np.dot(theta, x)))
 
 
-#--------------------------------
+#Binary classifier
+#------------------
 def predict(theta, x, y):
     return (h_theta(theta, x)**y) * ((1.0-h_theta(theta, x))**(1.0-y))
 
 
-#--------------------------------
+#DEBUG: Plot our findings
+#------------------------
 def plot(theta_list, x_list, y_list):
     new_x_list = [i[0] for i in x_list]
     new_y_list = [i[1] for i in x_list]
@@ -76,20 +78,16 @@ def plot(theta_list, x_list, y_list):
         if y_list[i] == 1.0:
             if predict(theta_list, x_list[i], y_list[i]) >= 0.5:
                 p1, = plt.plot(np.dot(theta_list, x_list[i]), y_list[i], 'go')
-                #plt.plot(new_x_list[i], new_y_list[i], 'go')
                 hit += 1
             else:
                 p2, = plt.plot(np.dot(theta_list, x_list[i]), y_list[i], 'gx')
-                #plt.plot(new_x_list[i], new_y_list[i], 'gx')
         elif y_list[i] == 0.0 :
             if predict(theta_list, x_list[i], y_list[i]) >= 0.5:
                 p3, = plt.plot(np.dot(theta_list, x_list[i]), y_list[i], 'ro')
-                #plt.plot(new_x_list[i], new_y_list[i], 'ro')
                 hit += 1
             else:
                 p4, = plt.plot(np.dot(theta_list, x_list[i]), y_list[i], 'rx')
-                #plt.plot(new_x_list[i], new_y_list[i], 'rx')
-    #plt.plot([np.dot(theta_list, i) for i in x_list], [h_theta(theta_list, i) for i in x_list], "yo")
+
     plt.title("Regressão logística sobre os dados de 'students.csv'")
     plt.xlabel("z")
     plt.ylabel("g(z)")
@@ -103,6 +101,6 @@ def plot(theta_list, x_list, y_list):
     plt.show()
 
 
-
+#-----------------------
 if __name__=="__main__":
     main()
