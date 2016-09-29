@@ -1,6 +1,6 @@
 #Author: Carlos Eduardo Leão Elmadjian
 #---------
-#Be aware of dependencies... (OpenCV, Numpy, Matplotlib, Keras, Theano...)
+#Be aware of dependencies... (Numpy, Matplotlib, Keras, Theano...)
 
 from __future__ import print_function
 import numpy as np

@@ -1,9 +1,9 @@
 #Author: Carlos Eduardo Leão Elmadjian
 #---------
-#Be aware of dependencies... (OpenCV, Numpy, Matplotlib, Keras, Theano...)
+#Be aware of dependencies... (Numpy, Matplotlib, Keras, Theano...)
 
 from __future__ import print_function
-import cv2, os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.datasets import reuters
@@ -29,14 +29,19 @@ class TestCallback(Callback):
 #initial setup
 #--------------
 def main():
+    if len(sys.argv) != 2:
+        print("usage: <this_program> <dataset_file>")
+        sys.exit()
+
     #initial settings
     np.random.seed(7)
     nb_epoch = 100
 
     #loading data
     print('Loading data...')
-    training_set, training_target = load_dataset('/faces_4')
-    testing_set, testing_target   = load_dataset('/faces_test')
+    dataset, target = load_dataset(sys.argv[1])
+    training_set, training_target = dataset[:-30], target[:-30]
+    testing_set, testing_target   = dataset[-30:], target[-30:]
     print(len(training_set), 'train sequences')
     print(len(testing_set), 'test sequences')
     nb_classes = 4
@@ -82,9 +87,9 @@ def main():
     plt.legend([p1, p2, p3], ['perda', 'acurácia', 'dados de teste'])
     plt.show()
 
-#Load all images in subfolders
-#-----------------------------
-def load_dataset(folder_path):
+#expects the file faces.csv as parameter
+#---------------------------------------
+def load_dataset(filename):
     """
     left     --> 0
     right    --> 1
@@ -92,19 +97,20 @@ def load_dataset(folder_path):
     straight --> 3
     """
     dataset, target = [], []
-    for root, dirs, files in os.walk(os.getcwd() + folder_path):
-        for name in files:
-            img = cv2.imread(os.path.join(root, name))
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            features = img.flatten().tolist()
-            dataset.append(features)
-            if "_left_" in name:
+    with open(filename, 'r') as f:
+        f.readline()
+        for line in f:
+            values = line.split(',')
+            direction = values[-1]
+            numeric   = [float(i) for i in values[:-1]]
+            dataset.append(numeric)
+            if "left" in direction:
                 target.append(0)
-            elif "_right_" in name:
+            elif "right" in direction:
                 target.append(1)
-            elif "_up_" in name:
+            elif "up" in direction:
                 target.append(2)
-            elif "_straight_" in name:
+            elif "straight" in direction:
                 target.append(3)
     return dataset, target
 
