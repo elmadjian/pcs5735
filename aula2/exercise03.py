@@ -35,7 +35,7 @@ def main():
 
     #initial settings
     np.random.seed(7)
-    nb_epoch = 100
+    nb_epoch = 15
 
     #loading data
     print('Loading data...')
