@@ -2,7 +2,7 @@
 #-----
 #this classifier requires BeautifulSoup package to work!
 
-import sys
+import sys, re
 from bs4 import BeautifulSoup
 
 STOP_WORDS = ["a", "about", "above", "above", "across", "after", "afterwards", \
@@ -52,28 +52,7 @@ STOP_WORDS = ["a", "about", "above", "above", "across", "after", "afterwards", \
                "which", "while", "whither", "who", "whoever", "whole", "whom",\
                "whose", "why", "will", "with", "within", "without", "would",\
                "yet", "you", "your", "yours", "yourself", "yourselves", "the",\
-               "Reuter\n&#3;"]
-
-
-#A processor capable of parsing sgml texts
-##########################################
-class SGMLProcessor():
-    def __init__(self, file_descriptor):
-        self.process_file(file_descriptor)
-
-    def process_file(self, file_descriptor):
-        soup = BeautifulSoup(file_descriptor, "xml")
-        for r in soup.find_all('REUTERS'):
-            print(r['LEWISSPLIT'], r['TOPICS'])
-            print(r.BODY.string)
-
-
-
-    def get_classes(self):
-        pass
-
-    def get_body_text(self):
-        pass
+               "reuter", "s"]
 
 
 #A Naive Bayes learner and classifier
@@ -81,20 +60,67 @@ class SGMLProcessor():
 ######################################
 class NaiveBayes():
     def __init__(self):
+        self.vocabulary = {}
+        self.V = {}
+        self.prob_v = {}
+        self.prob_w = {}
+        self.docs = 0
+        self.n = {}
         self.file = None
 
-    def learn(self, training_set, classes):
-        pass
+    def read_file(self, filename):
+        with open(filename, "r") as f:
+            self.file = f.read()
+
+    def learn(self):
+        self._process_file()
+        self._calculate_probabilities()
+
+    def _process_file(self):
+        soup   = BeautifulSoup(self.file, "xml")
+        for r in soup.find_all('REUTERS'):
+            if r['LEWISSPLIT'] == 'TRAIN' and r.BODY and r.TOPICS.D:
+                self.docs += 1
+                topic = []
+
+                #extracting topics
+                for t in r.TOPICS:
+                    topic.append(t.string)
+                    if t.string not in self.V.keys():
+                        self.V[t.string] = 0
+                        self.n[t.string] = set()
+                    self.V[t.string] = 1
+
+                #extracting vocabulary
+                words = re.findall('[A-Za-z]+', r.BODY.string)
+                for w in words:
+                    word = w.lower()
+                    if word not in STOP_WORDS:
+                        if word not in self.vocabulary.keys():
+                            self.vocabulary[word] = {}
+                        for t in topic:
+                            if t not in self.vocabulary[word].keys():
+                                self.vocabulary[word][t] = 0
+                            self.vocabulary[word][t] += 1
+                            self.n[t].add(word)
+
+    def _calculate_probabilities(self):
+        for w in self.vocabulary.keys():
+            self.prob_w[w] = {}
+            for v in self.V.keys():
+                vsize = len(self.vocabulary.keys())
+                nsize = len(self.n[v])
+                self.prob_v[v] = self.V[v]/self.docs
+                if v not in self.vocabulary[w].keys():
+                    self.vocabulary[w][v] = 0
+                self.prob_w[w][v] = (self.vocabulary[w][v] + 1)/(nsize + vsize)
 
     def classify(self, testing_set):
         pass
 
-    def extract_vocabulary(self, training_set):
-        pass
 
-    def read_file(self, filename):
-        with open(filename, "r") as f:
-            processor = SGMLProcessor(f)
+
+
 
 
 #main program
@@ -102,6 +128,7 @@ class NaiveBayes():
 def main():
     nb = NaiveBayes()
     nb.read_file(sys.argv[1])
+    nb.learn()
 
 
 if __name__ == "__main__":
