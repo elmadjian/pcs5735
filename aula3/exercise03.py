@@ -2,7 +2,7 @@
 #-----
 #this classifier requires BeautifulSoup package to work!
 
-import sys, re
+import re
 from bs4 import BeautifulSoup
 
 STOP_WORDS = ["a", "about", "above", "above", "across", "after", "afterwards", \
@@ -66,18 +66,20 @@ class NaiveBayes():
         self.prob_w = {}
         self.docs = 0
         self.n = {}
-        self.file = None
+        self.files = []
 
-    def read_file(self, filename):
-        with open(filename, "r") as f:
-            self.file = f.read()
+    def read_files(self, filenames):
+        for filename in filenames:
+            with open(filename, "r") as f:
+                self.files.append(f.read())
 
     def learn(self):
-        self._process_file()
+        for f in self.files:
+            self._process_file(f)
         self._calculate_probabilities()
 
-    def _process_file(self):
-        soup   = BeautifulSoup(self.file, "xml")
+    def _process_file(self, file_d):
+        soup   = BeautifulSoup(file_d, "xml")
         for r in soup.find_all('REUTERS'):
             if r['LEWISSPLIT'] == 'TRAIN' and r.BODY and r.TOPICS.D:
                 self.docs += 1
@@ -116,6 +118,12 @@ class NaiveBayes():
                 self.prob_w[w][v] = (self.vocabulary[w][v] + 1)/(nsize + vsize)
 
     def classify(self, testing_set):
+        """
+        1.abrir o conjunto de arquivos marcados com LEWISSPLIT == 'TEST' e TOPICS == 'YES'
+        2.para cada arquivo, testar o classificador e anotar o GT descrito na tag <TOPICS>
+        3.comparar o resultado do teste de classificação para o argumento que maximiza com o GT
+        4.mostrar a acurácia (em tabela --> porcentagem de acerto para cada classe)
+        """
         pass
 
 
@@ -126,8 +134,10 @@ class NaiveBayes():
 #main program
 #############
 def main():
+    filenames =  ["reuters21578/reut2-00" + str(i) + ".sgm" for i in range(10)]
+    filenames += ["reuters21578/reut2-0" + str(i) + ".sgm" for i in range(10,22)]
     nb = NaiveBayes()
-    nb.read_file(sys.argv[1])
+    nb.read_files(filenames)
     nb.learn()
 
 
