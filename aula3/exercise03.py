@@ -2,7 +2,7 @@
 #-----
 #this classifier requires BeautifulSoup package to work!
 
-import re
+import re, sys, math
 from bs4 import BeautifulSoup
 
 STOP_WORDS = ["a", "about", "above", "above", "across", "after", "afterwards", \
@@ -60,13 +60,17 @@ STOP_WORDS = ["a", "about", "above", "above", "across", "after", "afterwards", \
 ######################################
 class NaiveBayes():
     def __init__(self):
-        self.vocabulary = {}
-        self.V = {}
-        self.prob_v = {}
-        self.prob_w = {}
-        self.docs = 0
-        self.n = {}
-        self.files = []
+        self.vocabulary = {} #stores the number of times each vocab appears
+        self.V = {}          #stores the number of times each class appears
+        self.prob_v = {}     #a priori probability of a certain class v
+        self.prob_w = {}     #conditional probability of a certain word w given v
+        self.docs = 0        #number of documents in training set
+        self.n = {}          #number of distinct classes
+        self.files = []      #files to be processed
+        self.total = 0       #number of docs to classify in test dataset
+        self.hits = 0        #number of hits in test dataset
+        self.found = {}      #stores the number of docs per class in test ds
+        self.hit = {}        #keeps the number of hits per class in test ds
 
     def read_files(self, filenames):
         for filename in filenames:
@@ -74,12 +78,30 @@ class NaiveBayes():
                 self.files.append(f.read())
 
     def learn(self):
+        print("TRAINING...")
+        i = ""
         for f in self.files:
             self._process_file(f)
+            i += "|"
+            print('\r[{0:22}] complete'.format(i), end="", flush=True)
+        print("\ndone!")
         self._calculate_probabilities()
 
+    def classify(self):
+        if not self.prob_v:
+            print("You have to train the classifier with examples first!")
+            sys.exit()
+        print("CLASSIFYING... (this may take a while)")
+        i = ""
+        for f in self.files:
+            self._classify_file(f)
+            i += "|"
+            print('\r[{0:22}] complete'.format(i), end="", flush=True)
+        print("\nDISPLAYING RESULTS...")
+        self._show_results()
+
     def _process_file(self, file_d):
-        soup   = BeautifulSoup(file_d, "xml")
+        soup = BeautifulSoup(file_d, "xml")
         for r in soup.find_all('REUTERS'):
             if r['LEWISSPLIT'] == 'TRAIN' and r.BODY and r.TOPICS.D:
                 self.docs += 1
@@ -91,7 +113,7 @@ class NaiveBayes():
                     if t.string not in self.V.keys():
                         self.V[t.string] = 0
                         self.n[t.string] = set()
-                    self.V[t.string] = 1
+                    self.V[t.string] += 1
 
                 #extracting vocabulary
                 words = re.findall('[A-Za-z]+', r.BODY.string)
@@ -112,33 +134,68 @@ class NaiveBayes():
             for v in self.V.keys():
                 vsize = len(self.vocabulary.keys())
                 nsize = len(self.n[v])
-                self.prob_v[v] = self.V[v]/self.docs
+                self.prob_v[v] = math.log(self.V[v]/self.docs)
                 if v not in self.vocabulary[w].keys():
                     self.vocabulary[w][v] = 0
-                self.prob_w[w][v] = (self.vocabulary[w][v] + 1)/(nsize + vsize)
+                self.prob_w[w][v] = math.log((self.vocabulary[w][v]+1)/(nsize+vsize))
 
-    def classify(self, testing_set):
-        """
-        1.abrir o conjunto de arquivos marcados com LEWISSPLIT == 'TEST' e TOPICS == 'YES'
-        2.para cada arquivo, testar o classificador e anotar o GT descrito na tag <TOPICS>
-        3.comparar o resultado do teste de classificação para o argumento que maximiza com o GT
-        4.mostrar a acurácia (em tabela --> porcentagem de acerto para cada classe)
-        """
-        pass
+    def _get_argmax(self, word_list):
+        argmax = "not found"
+        maxval = -sys.maxsize
+        for v in self.V.keys():
+            accum  = 0.0
+            for w in word_list:
+                word = w.lower()
+                if word not in STOP_WORDS and word in self.vocabulary.keys():
+                    accum += self.prob_w[word][v]
+            accum += self.prob_v[v]
+            if accum > maxval:
+                maxval = accum
+                argmax = v
+        return argmax
 
+    def _classify_file(self, file_d):
+        soup  = BeautifulSoup(file_d, "xml")
+        for r in soup.find_all('REUTERS'):
+            if r['LEWISSPLIT'] == 'TEST' and r.BODY and r.TOPICS.D:
+                self.total += 1
+                words  = re.findall('[A-Za-z]+', r.BODY.string)
+                v_max  = self._get_argmax(words)
+                topics = []
+                for t in r.TOPICS:
+                    if t.string not in self.found.keys():
+                        self.found[t.string] = 0
+                        self.hit[t.string] = 0
+                    self.found[t.string] += 1
+                    topics.append(t.string)
+                if v_max in topics:
+                    for t in topics:
+                        self.hit[t] += 1
+                    self.hits += 1
 
-
+    def _show_results(self):
+        results = sorted(self.found.items(), key=lambda x: x[1], reverse=True)
+        print("      class      | found |  hits  |     rate      ")
+        print("--------------------------------------------------")
+        for r in results:
+            f = r[0]
+            found = r[1]
+            hits = self.hit[f]
+            rate = self.hit[f]/found
+            print('{0:17}|{1:7d}|{2:8}|{3:15}'.format(f, found, hits, rate))
 
 
 
 #main program
 #############
 def main():
+    #the program expects the files to be in the following folders:
     filenames =  ["reuters21578/reut2-00" + str(i) + ".sgm" for i in range(10)]
     filenames += ["reuters21578/reut2-0" + str(i) + ".sgm" for i in range(10,22)]
     nb = NaiveBayes()
     nb.read_files(filenames)
     nb.learn()
+    nb.classify()
 
 
 if __name__ == "__main__":
